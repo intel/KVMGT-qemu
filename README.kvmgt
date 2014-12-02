@@ -1,0 +1,78 @@
+0. get the source code
+
+	qemu & seabios:
+
+	$ git clone git://github.com/01org/KVMGT-qemu
+	$ cd KVMGT-qemu
+	$ git submodule update --init dtc
+	$ git submodule update --init roms/seabios
+
+	kernel:
+
+	$ git clone git://github.com/01org/KVMGT-kernel
+
+1. build and run the host kernel
+
+	$ cd KVMGT-kernel
+
+	build the kernel, there is a "config-3.14.1-host" to be referred.
+
+	install necessary files:
+
+		# cp vgt.rules /etc/udev/rules.d/
+		# cp vgt_mgr /usr/bin/
+
+	boot the new kernel with cmdline:
+
+		intel_iommu=igfx_off xen_vgt.vgt=1 xen_vgt.hvm_boot_foreground=1
+
+
+
+
+2. build qemu/seabios
+
+	$ cd KVMGT-qemu
+
+	config and make qemu. FWIW, configurations options I used:
+
+		--enable-kvm
+		--disable-xen
+		--enable-debug-info
+		--enable-debug
+		--enable-sdl
+		--enable-vhost-net
+		--target-list=x86_64-softmmu
+
+	make a new "x86_64-softmmu/qemu-system-x86_64"
+
+
+	$ git submodule init
+	$ git submodule update --init roms/seabios
+	$ cd roms/seabios
+
+	make a new "out/bios.bin"
+
+
+
+	link binaries of qemu and bios:
+
+		$ cd KVMGT-qemu
+		# ln -sf `pwd`/x86_64-softmmu/qemu-system-x86_64 /path/to/qemu-system-x86_64
+		# ln -sf `pwd`/roms/seabios/out/bios.bin /path/to/bios.bin
+
+
+3. run KVMGT host
+
+	add this to kernel cmdline:
+
+		intel_iommu=igfx_off xen_vgt.hvm_boot_foreground=1
+
+
+4. run KVMGT guest
+
+	# /path/to/qemu-system-x86_64 -bios /path/to/bios.bin			\
+		-M pc -smp 2 -cpu host -m 1024					\
+		-machine kernel_irqchip=on					\
+		-vgt -vga vgt							\
+		{snip}
+
