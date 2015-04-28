@@ -69,11 +69,37 @@
 
 
 4. run KVMGT guest
+FYI: https://github.com/01org/XenGT-Preview-kernel/blob/master/XenGT_Setup_Guide.pdf
 
-	# /path/to/qemu-system-x86_64 -bios /path/to/bios.bin			\
-		-enable-kvm							\
-		-M pc -smp 2 -cpu host -m 1024					\
-		-machine kernel_irqchip=on					\
-		-vgt -vga vgt							\
-		{snip}
+	At first, you have to enable the VGPU support in guest kernel, you may want
+	either:
 
+		- Copy the host kernel to guest. Refer to XenGT_Setup_Guide.pdf,
+		  section 3.6.3: Linux Guest Setup for XenGT;
+
+	or:
+
+		- Use a new kernel. From tag v4.1-rc1 on, the vanilla kernel
+		  contains VGPU support;
+
+
+	after that, you can run that image with:
+
+		# /path/to/qemu-system-x86_64 -bios /path/to/bios.bin	\
+			-enable-kvm					\
+			-M pc -smp 2 -cpu host -m 1024			\
+			-machine kernel_irqchip=on			\
+			-vgt -vga vgt					\
+			{snip}
+
+
+	Currently KVMGT doesn't support PPGTT shadowing, so don't forget to
+	disable the PPGTT support in guest i915, adding:
+
+		i915.enable_ppgtt=0
+
+	or:
+
+		i915.i915_enable_ppgtt=0
+
+	according your kernel version.
